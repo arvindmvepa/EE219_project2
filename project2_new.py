@@ -11,14 +11,12 @@ rec_categories = [['rec.autos'],['rec.motorcycles'],['rec.sport.baseball'],['rec
 comp_train = {}
 comp_test = {}
 for category in comp_categories:
-
     comp_train["{0}".format(category)] = fetch_20newsgroups(subset='train', categories=category, shuffle=True, random_state=42)
     comp_test["{0}".format(category)] = fetch_20newsgroups(subset='test', categories=category, shuffle=True, random_state=42)
 
 rec_train = {}
 rec_test = {}
 for category in rec_categories:
-
     rec_train["{0}".format(category)] = fetch_20newsgroups(subset='train', categories=category, shuffle=True, random_state=42)
     rec_test["{0}".format(category)] = fetch_20newsgroups(subset='test', categories=category, shuffle=True, random_state=42)
 
