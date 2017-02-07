@@ -1,8 +1,3 @@
-
-# coding: utf-8
-
-# In[33]:
-
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
 import matplotlib.pyplot as plt; plt.rcdefaults()
