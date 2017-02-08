@@ -2,10 +2,13 @@ import warnings
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from nltk import SnowballStemmer
+import string
 
 warnings.filterwarnings("ignore")
 
@@ -43,31 +46,76 @@ plt.xticks(y_pos, objects)
 plt.ylabel('Counts')
 plt.title('Counts for Training Set')
 plt.tight_layout()
-plt.show()
+#plt.show()
 
 plt.bar(y_pos, np.array(test_counts), align='center', alpha=0.5)
 plt.xticks(y_pos, objects)
 plt.ylabel('Counts')
 plt.title('Counts for Test Set')
 plt.tight_layout()  
-plt.show()
+#plt.show()
 
-### PART B & PART C ###
-categories = list(newsgroups_train.target_names)
+### PART B ###
+def tokenize(data):
+
+    stemmer = SnowballStemmer("english")
+    temp = data
+    temp = "".join([a for a in temp if a not in set(string.punctuation)])
+    temp = re.sub('[,.-:/()?{}*$#&]', ' ', temp)
+    temp = "".join(b for b in temp if ord(b) < 128)
+    words = temp.split()
+    stemmed = [stemmer.stem(item) for item in words]
+
+    return stemmed
+
+### This part is for testing ###
+'''
+corpus = [
+    'This is the first document.',
+    'This is the second second document.',
+    'And the third one.',
+    'Is this the first document?',
+    'He will play playing plays...',
+    'Walking I playing swimming',
+    'Thanks walks to school swim go play bee'
+]
+
+vectorizer = CountVectorizer(analyzer='word', stop_words='english', tokenizer=tokenize)
+tfidf_transformer = TfidfTransformer()
+X_train_counts = vectorizer.fit_transform(corpus)
+X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+
+print X_train_counts.shape
+print vectorizer.vocabulary_.keys()
+print X_train_tfidf.toarray()
+
+
+stop_words = text.ENGLISH_STOP_WORDS
+print list(stop_words).index("about")
+
+'''
+
+categories = comp_categories + rec_categories
+vectorizer = CountVectorizer(analyzer='word', stop_words='english', tokenizer=tokenize)
+tfidf_transformer = TfidfTransformer()
+twenty_train = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
+X_train_counts = vectorizer.fit_transform(twenty_train.data)
+X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+print "Number of terms extracted: " + str(X_train_tfidf.shape)
+
+''''### PART C ###
 elements = ['comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware', 'misc.forsale', 'soc.religion.christian']
 
 vectorizer = CountVectorizer(analyzer = 'word',stop_words='english', token_pattern=u'(?u)\\b\\w\\w+\\b')
 tfidf_transformer = TfidfTransformer()
-for category in categories:
+for category in elements:
 
     twenty_train = fetch_20newsgroups(subset='train', categories=[category], shuffle=True, random_state=42)
     X_train_counts = vectorizer.fit_transform(twenty_train.data)
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
     print "Number of terms extracted for %s: " %(category) + str(X_train_tfidf.shape[1])
 
-    if category in elements:
-
-        X_train_tfidf = np.sum(X_train_tfidf.toarray(), axis=0)
-        most_important_word_indices = np.argsort(X_train_tfidf)[::-1][:10]
-        most_important_words = [vectorizer.get_feature_names()[i] for i in most_important_word_indices]
-        print "Most Important Ten Words for %s: " %(category) + str(most_important_words)
+    X_train_tfidf = np.sum(X_train_tfidf.toarray(), axis=0)
+    most_important_word_indices = np.argsort(X_train_tfidf)[::-1][:10]
+    most_important_words = [vectorizer.get_feature_names()[i] for i in most_important_word_indices]
+    print "Most Important Ten Words for %s: " %(category) + str(most_important_words)'''
