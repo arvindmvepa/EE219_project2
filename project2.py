@@ -34,14 +34,16 @@ plt.bar(y_pos, np.array(train_counts), align='center', alpha=0.5)
 plt.xticks(y_pos, objects)
 plt.ylabel('Counts')
 plt.title('Counts for Training Set')
-plt.tight_layout() 
+plt.tight_layout()
+plt.savefig('training_set_histogram.png')
 plt.show()
 
 plt.bar(y_pos, np.array(test_counts), align='center', alpha=0.5)
 plt.xticks(y_pos, objects)
 plt.ylabel('Counts')
 plt.title('Counts for Test Set')
-plt.tight_layout()  
+plt.tight_layout()
+plt.savefig('test_set_histogram.png')
 plt.show()
 
 #Part b
