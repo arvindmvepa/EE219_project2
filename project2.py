@@ -4,10 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 
 warnings.filterwarnings("ignore")
 
-#Part a
+### PRINT ALL 20 NEWSGROUPS ###
+newsgroups_train = fetch_20newsgroups(subset='train')
+print("Names of All Newsgroups: " + str(list(newsgroups_train.target_names)))
+print('\n')
+
+### PART A ###
 comp_categories = ['comp.graphics','comp.os.ms-windows.misc','comp.sys.ibm.pc.hardware','comp.sys.mac.hardware']
 rec_categories = ['rec.autos','rec.motorcycles','rec.sport.baseball','rec.sport.hockey']
 
@@ -18,6 +25,7 @@ rec_test = fetch_20newsgroups(subset='test', categories=rec_categories, shuffle=
 
 print("Training Set - Computer Technology: %s Recreation: %s" %(comp_train.filenames.shape[0],rec_train.filenames.shape[0]))
 print("Test Set - Computer Technology: %s Recreation: %s" %(comp_test.filenames.shape[0],rec_test.filenames.shape[0]))
+print('\n')
 
 comp_train_list=comp_train.target.tolist()
 rec_train_list=rec_train.target.tolist()
@@ -35,26 +43,31 @@ plt.xticks(y_pos, objects)
 plt.ylabel('Counts')
 plt.title('Counts for Training Set')
 plt.tight_layout()
-plt.savefig('training_set_histogram.png')
 plt.show()
 
 plt.bar(y_pos, np.array(test_counts), align='center', alpha=0.5)
 plt.xticks(y_pos, objects)
 plt.ylabel('Counts')
 plt.title('Counts for Test Set')
-plt.tight_layout()
-plt.savefig('test_set_histogram.png')
+plt.tight_layout()  
 plt.show()
 
-#Part b
-categories = [ 'comp.graphics', 'comp.os.ms-windows.misc', 'comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware', 'rec.autos', 'rec.motorcycles', 'rec.sport.baseball', 'rec.sport.hockey']
+### PART B & PART C ###
+categories = list(newsgroups_train.target_names)
+elements = ['comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware', 'misc.forsale', 'soc.religion.christian']
 
-twenty_train = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
-twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=True, random_state=42)
-stop_words = text.ENGLISH_STOP_WORDS
+vectorizer = CountVectorizer(analyzer = 'word',stop_words='english', token_pattern=u'(?u)\\b\\w\\w+\\b')
+tfidf_transformer = TfidfTransformer()
+for category in categories:
 
-#vectorizer_train = TfidfVectorizer()
-#vectors_train = vectorizer_train.fit_transform(twenty_train.data)
+    twenty_train = fetch_20newsgroups(subset='train', categories=[category], shuffle=True, random_state=42)
+    X_train_counts = vectorizer.fit_transform(twenty_train.data)
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    print "Number of terms extracted for %s: " %(category) + str(X_train_tfidf.shape[1])
 
-#vectorizer_test = TfidfVectorizer()
-#vectors_test = vectorizer_test.fit_transform(twenty_test.data)'''
+    if category in elements:
+
+        X_train_tfidf = np.sum(X_train_tfidf.toarray(), axis=0)
+        most_important_word_indices = np.argsort(X_train_tfidf)[::-1][:10]
+        most_important_words = [vectorizer.get_feature_names()[i] for i in most_important_word_indices]
+        print "Most Important Ten Words for %s: " %(category) + str(most_important_words)
