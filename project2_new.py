@@ -61,6 +61,7 @@ plt.title('Counts for Test Set')
 plt.tight_layout()  
 plt.show()
 
+
 #Part b
 categories = [ 'comp.graphics', 'comp.os.ms-windows.misc', 'comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware', 'rec.autos', 'rec.motorcycles', 'rec.sport.baseball', 'rec.sport.hockey']
 
