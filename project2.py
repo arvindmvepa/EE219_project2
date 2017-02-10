@@ -1,16 +1,19 @@
-import warnings
-import matplotlib.pyplot as plt; plt.rcdefaults()
-import numpy as np
-import matplotlib.pyplot as plt
 import re
+import math
+import string
+import operator
+import warnings
+import numpy as np
+import matplotlib.pyplot as plt; plt.rcdefaults()
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction import text
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve
 from sklearn.svm import LinearSVC
 from nltk import SnowballStemmer
-import string
+from collections import Counter
+from collections import defaultdict
 
 warnings.filterwarnings("ignore")
 
@@ -110,24 +113,55 @@ X_train_counts = vectorizer.fit_transform(twenty_train.data)
 X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
 print "Number of terms extracted: " + str(X_train_tfidf.shape)
 
-'''
+
 ### PART C ###
-elements = ['comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware', 'misc.forsale', 'soc.religion.christian']
+newsgroups_train = fetch_20newsgroups(subset='train')
+all_newsgroups = newsgroups_train.target_names
 
-vectorizer = CountVectorizer(analyzer = 'word',stop_words='english', token_pattern=u'(?u)\\b\\w\\w+\\b')
-tfidf_transformer = TfidfTransformer()
-for category in elements:
+index_ibm_pc = all_newsgroups.index("comp.sys.ibm.pc.hardware")
+index_mac = all_newsgroups.index("comp.sys.mac.hardware")
+index_forsale = all_newsgroups.index("misc.forsale")
+index_religion = all_newsgroups.index("soc.religion.christian")
 
-    twenty_train = fetch_20newsgroups(subset='train', categories=[category], shuffle=True, random_state=42)
-    X_train_counts = vectorizer.fit_transform(twenty_train.data)
-    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-    print "Number of terms extracted for %s: " %(category) + str(X_train_tfidf.shape[1])
+class_indices = [index_ibm_pc, index_mac, index_forsale, index_religion]
 
-    X_train_tfidf = np.sum(X_train_tfidf.toarray(), axis=0)
-    most_important_word_indices = np.argsort(X_train_tfidf)[::-1][:10]
-    most_important_words = [vectorizer.get_feature_names()[i] for i in most_important_word_indices]
-    print "Most Important Ten Words for %s: " %(category) + str(most_important_words)
-'''
+all_data = []
+all_words = []
+all_word_freqs = []
+word_class_dict = defaultdict(list)
+
+for category in all_newsgroups:
+    newsgroup_category = fetch_20newsgroups(subset='train', categories=[category], shuffle=True, random_state=42)
+    newsgroup_category_data = newsgroup_category.data
+    temp = ''
+    for file in newsgroup_category_data:
+        temp = temp + file
+    all_data.append(temp)
+
+for class_data,index in zip(all_data, range(len(all_data))):
+    tokenize_data = tokenize(class_data)
+    unique_words = set(tokenize_data)
+    all_words.append(list(unique_words))
+    word_count = Counter(tokenize_data)
+    all_word_freqs.append(word_count)
+    for word in unique_words:
+        word_class_dict[word].append(all_newsgroups[index])
+
+for class_index in class_indices:
+    terms_extracted_in_class = all_words[class_index]
+    freq_of_terms_in_class = all_word_freqs[class_index]
+    number_of_terms_extracted = len(terms_extracted_in_class)
+
+    tficf = dict()
+    for each_term in range(number_of_terms_extracted):
+        term = terms_extracted_in_class[each_term]
+        frequency_term = freq_of_terms_in_class.get(term)
+        number_of_classes_with_term = len(word_class_dict[term])
+        tficf[term] = 0.5 + ((0.5 * frequency_term/number_of_terms_extracted) * math.log(len(all_newsgroups)/number_of_classes_with_term))
+
+    print "Most significant 10 terms for class: " + str(all_newsgroups[class_index])
+    most_significant_terms = dict(sorted(tficf.items(), key=operator.itemgetter(1), reverse=True)[:10])
+    print (most_significant_terms.keys())
 
 ### Part D: Dimension Reduction ###
 svd = TruncatedSVD(n_components=50, random_state=42)
