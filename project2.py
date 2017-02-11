@@ -5,14 +5,14 @@ import operator
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt; plt.rcdefaults()
-from sklearn import preprocessing
+from sklearn import preprocessing, cross_validation
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from statsmodels.discrete.discrete_model import Logit
 from nltk import SnowballStemmer
 from collections import Counter
@@ -210,6 +210,39 @@ plt.legend(loc="lower right")
 plt.savefig('svm_roc_curve.png')
 plt.show()
 
+### Part F: Soft Margin SVM ###
+accuracies = []
+predictions = dict()
+gamma_values = [10 ** i for i in range(-3,4)]
+
+for value in gamma_values:
+    soft_margin_SVM = SVC(C=value, kernel='linear').fit(X_train, train_targets)
+    scores = cross_validation.cross_val_score(soft_margin_SVM, np.concatenate((X_train, X_test), axis=0),
+                                np.append(train_targets, test_targets), cv=5, scoring='accuracy')
+    accuracies.append(np.average(scores))
+
+best_gamma_value = gamma_values[accuracies.index(max(accuracies))]
+
+soft_margin_SVM = SVC(C=best_gamma_value, kernel='linear').fit(X_train, train_targets)
+predicted_soft_svm = soft_margin_SVM.predict(X_test)
+accuracy_soft_svm = np.mean(predicted_soft_svm == test_targets)
+
+print "Best Gamma Value: " + str(gamma_values[accuracies.index(max(accuracies))])
+print "Accuracy of Soft Margin SVM: " + str(accuracy_soft_svm)
+print(classification_report(test_targets, predicted_soft_svm))
+print "Confusion Matrix:"
+print(confusion_matrix(test_targets, predicted_soft_svm))
+
+fpr, tpr, thresholds = roc_curve(test_targets, predicted_soft_svm)
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rte')
+plt.title('Soft Margin SVM: Receiver Operating Characteristic Curve')
+plt.legend(loc="lower right")
+plt.savefig('soft_margin_svm_roc_curve.png')
+plt.show()
+
 ### Part G: Naive Bayes ###
 clf = MultinomialNB().fit(X_train, train_targets)
 predicted_bayes = clf.predict(X_test)
@@ -250,3 +283,4 @@ plt.title('Logistic Regression (Unregularized): Receiver Operating Characteristi
 plt.legend(loc="lower right")
 plt.savefig('lru_roc_curve.png')
 plt.show()
+
