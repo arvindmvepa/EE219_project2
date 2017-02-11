@@ -5,12 +5,15 @@ import operator
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt; plt.rcdefaults()
+from sklearn import preprocessing
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC
+from statsmodels.discrete.discrete_model import Logit
 from nltk import SnowballStemmer
 from collections import Counter
 from collections import defaultdict
@@ -113,7 +116,6 @@ X_train_counts = vectorizer.fit_transform(twenty_train.data)
 X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
 print "Number of terms extracted: " + str(X_train_tfidf.shape)
 
-
 ### PART C ###
 newsgroups_train = fetch_20newsgroups(subset='train')
 all_newsgroups = newsgroups_train.target_names
@@ -168,12 +170,17 @@ svd = TruncatedSVD(n_components=50, random_state=42)
 X_train_reduced = svd.fit_transform(X_train_tfidf)
 print "Size of TF-IDF matrix after dimension reduction: " + str(X_train_reduced.shape)
 
+# Feature Scaling For Certain Algorithms Require Nonnegative Values
+min_max_scaler = preprocessing.MinMaxScaler()
+X_train = min_max_scaler.fit_transform(X_train_reduced)
+
 ### Part E: Linear Suppor Vector Machines ###
 # First obtain test data and perform above transformations
 twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=True, random_state=42)
-Y_test_counts = vectorizer.transform(twenty_test.data)
-Y_test_tfidf = tfidf_transformer.transform(Y_test_counts)
-Y_test_reduced = svd.transform(Y_test_tfidf)
+X_test_counts = vectorizer.transform(twenty_test.data)
+X_test_tfidf = tfidf_transformer.transform(X_test_counts)
+X_test_reduced = svd.transform(X_test_tfidf)
+X_test = min_max_scaler.transform(X_test_reduced)
 
 # Second reduce multiclass problem to binary classfication problem
 # by reducing all subclasses of comp and subclasses of rec
@@ -183,8 +190,8 @@ train_targets = map(lambda x: int(x>=4), twenty_train.target.tolist())
 test_targets = map(lambda x: int(x>=4), twenty_test.target.tolist())
 
 # Train model and predict labels for test set
-linear_SVM = LinearSVC(dual=False, random_state=42).fit(X_train_reduced, train_targets)
-predicted_svm = linear_SVM.predict(Y_test_reduced)
+linear_SVM = LinearSVC(dual=False, random_state=42).fit(X_train, train_targets)
+predicted_svm = linear_SVM.predict(X_test)
 accuracy_svm = np.mean(predicted_svm == test_targets)
 
 # Report results
@@ -200,5 +207,46 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('Linear SVM: Receiver Operating Characteristic Curve')
 plt.legend(loc="lower right")
-plt.savefig('roc_curve.png')
+plt.savefig('svm_roc_curve.png')
+plt.show()
+
+### Part G: Naive Bayes ###
+clf = MultinomialNB().fit(X_train, train_targets)
+predicted_bayes = clf.predict(X_test)
+accuracy_bayes = np.mean(predicted_bayes == test_targets)
+
+print "Accuracy of Multinomial Naive Bayes: " + str(accuracy_bayes)
+print(classification_report(test_targets, predicted_bayes))
+print "Confusion Matrix:"
+print(confusion_matrix(test_targets, predicted_bayes))
+
+fpr, tpr, thresholds = roc_curve(test_targets, predicted_bayes)
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Multinomial Naive Bayes: Receiver Operating Characteristic Curve')
+plt.legend(loc="lower right")
+plt.savefig('mnnb_roc_curve.png')
+plt.show()
+
+### Part H: Logistic Regression (Unregularized) ###
+logit = Logit(train_targets, X_train).fit()
+probabilities = logit.predict(X_test)
+predicted_lr = (probabilities > 0.5).astype(int)
+accuracy_lr = np.mean(predicted_lr == test_targets)
+
+print "Accuracy of Logistic Regression (Unregularized): " + str(accuracy_lr)
+print(classification_report(test_targets, predicted_lr))
+print "Confusion Matrix:"
+print(confusion_matrix(test_targets, predicted_lr))
+
+fpr, tpr, thresholds = roc_curve(test_targets, predicted_lr)
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Logistic Regression (Unregularized): Receiver Operating Characteristic Curve')
+plt.legend(loc="lower right")
+plt.savefig('lru_roc_curve.png')
 plt.show()
