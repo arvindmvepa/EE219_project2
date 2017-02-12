@@ -5,6 +5,7 @@ import operator
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt; plt.rcdefaults()
+import sklearn.linear_model as sk
 from sklearn import preprocessing, cross_validation
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
@@ -284,3 +285,25 @@ plt.legend(loc="lower right")
 plt.savefig('lru_roc_curve.png')
 plt.show()
 
+### Part I: Logistic Regression (Regularized) ###
+for lam in [.0001,.001,.01,.5,1,10,100]:
+    logit_r = sk.LogisticRegression(penalty='l1', C = float(1)/lam).fit(X_train, train_targets)
+    probabilities_r = logit_r.predict(X_test)
+    predicted_lr_r = (probabilities_r > 0.5).astype(int)
+    accuracy_lr_r = np.mean(predicted_lr_r == test_targets)
+
+    print "Accuracy of Logistic Regression L1 Regularization for lambda = "+str(lam)+ ": " + str(accuracy_lr_r)
+    print(classification_report(test_targets, predicted_lr_r))
+    print "Confusion Matrix:"
+    print(confusion_matrix(test_targets, predicted_lr_r))
+
+for lam in [.0001,.001,.01,.5,1,10,100]:
+    logit_r = sk.LogisticRegression(penalty='l2', C = float(1)/lam).fit(X_train, train_targets)
+    probabilities_r = logit_r.predict(X_test)
+    predicted_lr_r = (probabilities_r > 0.5).astype(int)
+    accuracy_lr_r = np.mean(predicted_lr_r == test_targets)
+
+    print "Accuracy of Logistic Regression for L2 Regularization for lambda = "+str(lam)+ ": " + str(accuracy_lr_r)
+    print(classification_report(test_targets, predicted_lr_r))
+    print "Confusion Matrix:"
+    print(confusion_matrix(test_targets, predicted_lr_r))
