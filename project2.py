@@ -6,6 +6,8 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import sklearn.linear_model as sk
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn import preprocessing, cross_validation
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
@@ -265,7 +267,7 @@ plt.savefig('mnnb_roc_curve.png')
 plt.show()
 
 ### Part H: Logistic Regression (Unregularized) ###
-logit = Logit(train_targets, X_train).fit()
+logit = sk.LogisticRegression().fit(X_train, train_targets)
 probabilities = logit.predict(X_test)
 predicted_lr = (probabilities > 0.5).astype(int)
 accuracy_lr = np.mean(predicted_lr == test_targets)
@@ -307,3 +309,37 @@ for lam in [.0001,.001,.01,.5,1,10,100]:
     print(classification_report(test_targets, predicted_lr_r))
     print "Confusion Matrix:"
     print(confusion_matrix(test_targets, predicted_lr_r))
+
+### Part J: Multinomial Naive Bayes and Linear Suppor Vector Machines with One vs. One and One vs. The Rest Classifiers ###
+    
+#Multinomial Naive Bayes
+clf = MultinomialNB().fit(X_train,  twenty_train.target.tolist())
+predicted_bayes = clf.predict(X_test)
+accuracy_bayes = np.mean(predicted_bayes ==  twenty_test.target.tolist())
+
+print "Accuracy of Multinomial Naive Bayes: " + str(accuracy_bayes)
+print(classification_report( twenty_test.target.tolist(), predicted_bayes))
+print "Confusion Matrix:"
+print(confusion_matrix( twenty_test.target.tolist(), predicted_bayes))
+
+#One vs. One Linear SVM
+linear_SVM = OneVsOneClassifier(LinearSVC(dual=False, random_state=42)).fit(X_train, twenty_train.target.tolist())
+predicted_svm = linear_SVM.predict(X_test)
+accuracy_svm = np.mean(predicted_svm == twenty_test.target.tolist())
+
+
+print "Accuracy of Linear SVM - One vs. One: " + str(accuracy_svm)
+print(classification_report(twenty_test.target.tolist(), predicted_svm))
+print "Confusion Matrix:"
+print(confusion_matrix(twenty_test.target.tolist(), predicted_svm))
+
+#One vs. The Rest Linear SVM
+linear_SVM = OneVsRestClassifier(LinearSVC(dual=False, random_state=42)).fit(X_train, twenty_train.target.tolist())
+predicted_svm = linear_SVM.predict(X_test)
+accuracy_svm = np.mean(predicted_svm == twenty_test.target.tolist())
+
+
+print "Accuracy of Linear SVM - One vs. The Rest: " + str(accuracy_svm)
+print(classification_report(twenty_test.target.tolist(), predicted_svm))
+print "Confusion Matrix:"
+print(confusion_matrix(twenty_test.target.tolist(), predicted_svm))
