@@ -311,6 +311,19 @@ for lam in [.0001,.001,.01,.5,1,10,100]:
     print(confusion_matrix(test_targets, predicted_lr_r))
 
 ### Part J: Multinomial Naive Bayes and Linear Suppor Vector Machines with One vs. One and One vs. The Rest Classifiers ###
+categories = ['comp.sys.ibm.pc.hardware','comp.sys.mac.hardware', 'misc.forsale', 'soc.religion.christian']
+
+twenty_train = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
+X_train_counts = vectorizer.fit_transform(twenty_train.data)
+X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+X_train_reduced = svd.fit_transform(X_train_tfidf)
+X_train = min_max_scaler.fit_transform(X_train_reduced)
+
+twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=True, random_state=42)
+X_test_counts = vectorizer.transform(twenty_test.data)
+X_test_tfidf = tfidf_transformer.transform(X_test_counts)
+X_test_reduced = svd.transform(X_test_tfidf)
+X_test = min_max_scaler.transform(X_test_reduced)    
     
 #Multinomial Naive Bayes
 clf = MultinomialNB().fit(X_train,  twenty_train.target.tolist())
