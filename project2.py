@@ -77,7 +77,7 @@ def tokenize(data):
     temp = data
     temp = "".join([a for a in temp if a not in set(string.punctuation)])
     temp = re.sub('[,.-:/()?{}*$#&]', ' ', temp)
-    #temp = "".join(b for b in temp if ord(b) < 128)
+    temp = "".join(b for b in temp if ord(b) < 128)
     words = temp.split()
     stemmed = [stemmer.stem(item) for item in words]
     return stemmed
