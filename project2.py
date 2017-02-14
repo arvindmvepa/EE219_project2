@@ -32,7 +32,7 @@ warnings.filterwarnings("ignore")
 comp_categories = ['comp.graphics','comp.os.ms-windows.misc','comp.sys.ibm.pc.hardware','comp.sys.mac.hardware']
 rec_categories = ['rec.autos','rec.motorcycles','rec.sport.baseball','rec.sport.hockey']
 
-'''
+
 comp_train = fetch_20newsgroups(subset='train', categories=comp_categories, shuffle=True, random_state=42)
 comp_test = fetch_20newsgroups(subset='test', categories=comp_categories, shuffle=True, random_state=42)
 rec_train = fetch_20newsgroups(subset='train', categories=rec_categories, shuffle=True, random_state=42)
@@ -50,7 +50,6 @@ rec_test_list=rec_test.target.tolist()
 train_counts = [[comp_train_list.count(x)] for x in set(comp_train_list)] + [[rec_train_list.count(x)] for x in set(rec_train_list)]
 test_counts = [[comp_test_list.count(x)] for x in set(comp_test_list)] + [[rec_test_list.count(x)] for x in set(rec_test_list)]
 
-###TODO: Uncomment Before Submission ###
 objects = ('graphics', 'windows', 'ibm', 'mac', 'autos', 'cycles','baseball','hockey')
 y_pos = np.arange(len(objects))
 
@@ -60,7 +59,7 @@ plt.ylabel('Counts')
 plt.title('Counts for Training Set')
 plt.tight_layout()
 plt.savefig('training_set_histogram.png')
-#plt.show()
+plt.show()
 
 plt.bar(y_pos, np.array(test_counts), align='center', alpha=0.5)
 plt.xticks(y_pos, objects)
@@ -68,8 +67,8 @@ plt.ylabel('Counts')
 plt.title('Counts for Test Set')
 plt.tight_layout()
 plt.savefig('test_set_histogram.png')
-#plt.show()
-'''
+plt.show()
+
 
 ### PART B ###
 def tokenize(data):
@@ -78,10 +77,9 @@ def tokenize(data):
     temp = data
     temp = "".join([a for a in temp if a not in set(string.punctuation)])
     temp = re.sub('[,.-:/()?{}*$#&]', ' ', temp)
-    temp = "".join(b for b in temp if ord(b) < 128)
+    #temp = "".join(b for b in temp if ord(b) < 128)
     words = temp.split()
     stemmed = [stemmer.stem(item) for item in words]
-
     return stemmed
 
 '''
@@ -156,13 +154,14 @@ for class_index in class_indices:
     terms_extracted_in_class = all_words[class_index]
     freq_of_terms_in_class = all_word_freqs[class_index]
     number_of_terms_extracted = len(terms_extracted_in_class)
-
+    maxFreq = max(freq_of_terms_in_class.values())
     tficf = dict()
+    
     for each_term in range(number_of_terms_extracted):
         term = terms_extracted_in_class[each_term]
         frequency_term = freq_of_terms_in_class.get(term)
         number_of_classes_with_term = len(word_class_dict[term])
-        tficf[term] = 0.5 + ((0.5 * frequency_term/number_of_terms_extracted) * math.log(len(all_newsgroups)/number_of_classes_with_term))
+        tficf[term] = (0.5 + 0.5 * frequency_term/maxFreq) * math.log(len(all_newsgroups)/number_of_classes_with_term)
 
     print "Most significant 10 terms for class: " + str(all_newsgroups[class_index])
     most_significant_terms = dict(sorted(tficf.items(), key=operator.itemgetter(1), reverse=True)[:10])
