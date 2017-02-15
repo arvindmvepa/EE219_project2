@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt; plt.rcdefaults()
 import sklearn.linear_model as sk
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn import preprocessing, cross_validation
+from sklearn import preprocessing
+from sklearn.model_selection import cross_val_score
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction import text
 from sklearn.decomposition import TruncatedSVD
@@ -16,7 +17,6 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC, SVC
-from statsmodels.discrete.discrete_model import Logit
 from nltk import SnowballStemmer
 from collections import Counter
 from collections import defaultdict
@@ -24,14 +24,13 @@ from collections import defaultdict
 warnings.filterwarnings("ignore")
 
 ### PRINT ALL 20 NEWSGROUPS ###
-# newsgroups_train = fetch_20newsgroups(subset='train')
-# print("Names of All Newsgroups: " + str(list(newsgroups_train.target_names)))
-# print('\n')
+newsgroups_train = fetch_20newsgroups(subset='train')
+print("Names of All Newsgroups: " + str(list(newsgroups_train.target_names)))
+print('\n')
 
 ### PART A ###
 comp_categories = ['comp.graphics','comp.os.ms-windows.misc','comp.sys.ibm.pc.hardware','comp.sys.mac.hardware']
 rec_categories = ['rec.autos','rec.motorcycles','rec.sport.baseball','rec.sport.hockey']
-
 
 comp_train = fetch_20newsgroups(subset='train', categories=comp_categories, shuffle=True, random_state=42)
 comp_test = fetch_20newsgroups(subset='test', categories=comp_categories, shuffle=True, random_state=42)
@@ -69,45 +68,21 @@ plt.tight_layout()
 plt.savefig('test_set_histogram.png')
 plt.show()
 
-
 ### PART B ###
 def tokenize(data):
 
     stemmer = SnowballStemmer("english")
+    stop_words = text.ENGLISH_STOP_WORDS
     temp = data
-    temp = "".join([a for a in temp if a not in set(string.punctuation)])
-    temp = re.sub('[,.-:/()?{}*$#&]', ' ', temp)
+    regex = re.compile('[%s]' % re.escape(string.punctuation))
+    temp = regex.sub(' ', temp)
     temp = "".join(b for b in temp if ord(b) < 128)
+    temp = temp.lower()
     words = temp.split()
-    stemmed = [stemmer.stem(item) for item in words]
+    no_stop_words = [w for w in words if not w in stop_words]
+    stemmed = [stemmer.stem(item) for item in no_stop_words]
+
     return stemmed
-
-'''
-###TODO: Remove
-### This part is for testing ###
-corpus = [
-    'This is the first document.',
-    'This is the second22 second document.',
-    'And the third one.',
-    'Is this the first document?',
-    'He will play playing plays...',
-    'Walking I playing 5898 swimming',
-    'Thanks walks to school swim go play bee'
-]
-
-vectorizer = CountVectorizer(analyzer='word', stop_words='english', tokenizer=tokenize)
-tfidf_transformer = TfidfTransformer()
-X_train_counts = vectorizer.fit_transform(corpus)
-X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-
-print X_train_counts.shape
-print vectorizer.vocabulary_.keys()
-print X_train_tfidf.toarray()
-
-stop_words = text.ENGLISH_STOP_WORDS
-print list(stop_words).index("about")
-
-'''
 
 categories = comp_categories + rec_categories
 vectorizer = CountVectorizer(analyzer='word', stop_words='english', tokenizer=tokenize)
@@ -138,7 +113,7 @@ for category in all_newsgroups:
     newsgroup_category_data = newsgroup_category.data
     temp = ''
     for file in newsgroup_category_data:
-        temp = temp + file
+        temp += ' ' + file
     all_data.append(temp)
 
 for class_data,index in zip(all_data, range(len(all_data))):
@@ -161,10 +136,10 @@ for class_index in class_indices:
         term = terms_extracted_in_class[each_term]
         frequency_term = freq_of_terms_in_class.get(term)
         number_of_classes_with_term = len(word_class_dict[term])
-        tficf[term] = (0.5 + 0.5 * frequency_term/maxFreq) * math.log(len(all_newsgroups)/number_of_classes_with_term)
+        tficf[term] = (0.5 + (0.5 * frequency_term/maxFreq)) * math.log(len(all_newsgroups)/number_of_classes_with_term)
 
     print "Most significant 10 terms for class: " + str(all_newsgroups[class_index])
-    most_significant_terms = dict(sorted(tficf.items(), key=operator.itemgetter(1), reverse=True)[:10])
+    most_significant_terms = dict(sorted(tficf.iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
     print (most_significant_terms.keys())
 
 ### Part D: Dimension Reduction ###
@@ -219,7 +194,7 @@ gamma_values = [10 ** i for i in range(-3,4)]
 
 for value in gamma_values:
     soft_margin_SVM = SVC(C=value, kernel='linear').fit(X_train, train_targets)
-    scores = cross_validation.cross_val_score(soft_margin_SVM, np.concatenate((X_train, X_test), axis=0),
+    scores = cross_val_score(soft_margin_SVM, np.concatenate((X_train, X_test), axis=0),
                                 np.append(train_targets, test_targets), cv=5, scoring='accuracy')
     accuracies.append(np.average(scores))
 
