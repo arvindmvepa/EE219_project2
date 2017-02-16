@@ -107,7 +107,7 @@ all_data = []
 all_words = []
 all_word_freqs = []
 word_class_dict = defaultdict(list)
-
+"""
 for category in all_newsgroups:
     newsgroup_category = fetch_20newsgroups(subset='train', categories=[category], shuffle=True, random_state=42)
     newsgroup_category_data = newsgroup_category.data
@@ -141,7 +141,7 @@ for class_index in class_indices:
     print "Most significant 10 terms for class: " + str(all_newsgroups[class_index])
     most_significant_terms = dict(sorted(tficf.iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
     print (most_significant_terms.keys())
-
+"""
 ### Part D: Dimension Reduction ###
 svd = TruncatedSVD(n_components=50, random_state=42)
 X_train_reduced = svd.fit_transform(X_train_tfidf)
@@ -165,7 +165,7 @@ X_test = min_max_scaler.transform(X_test_reduced)
 
 train_targets = map(lambda x: int(x>=4), twenty_train.target.tolist())
 test_targets = map(lambda x: int(x>=4), twenty_test.target.tolist())
-
+"""
 # Train model and predict labels for test set
 linear_SVM = LinearSVC(dual=False, random_state=42).fit(X_train, train_targets)
 predicted_svm = linear_SVM.predict(X_test)
@@ -260,10 +260,14 @@ plt.title('Logistic Regression (Unregularized): Receiver Operating Characteristi
 plt.legend(loc="lower right")
 plt.savefig('lru_roc_curve.png')
 plt.show()
-
+"""
 ### Part I: Logistic Regression (Regularized) ###
+coefs_1=[]
 for lam in [.0001,.001,.01,.5,1,10,100]:
     logit_r = sk.LogisticRegression(penalty='l1', C = float(1)/lam).fit(X_train, train_targets)
+
+    coefs_1.append(logit_r.coef_.ravel().copy())
+
     probabilities_r = logit_r.predict(X_test)
     predicted_lr_r = (probabilities_r > 0.5).astype(int)
     accuracy_lr_r = np.mean(predicted_lr_r == test_targets)
@@ -273,8 +277,20 @@ for lam in [.0001,.001,.01,.5,1,10,100]:
     print "Confusion Matrix:"
     print(confusion_matrix(test_targets, predicted_lr_r))
 
+coefs_1 = np.array(coefs_1)
+plt.plot(np.log10([.0001,.001,.01,.5,1,10,100]), coefs_1)
+ymin, ymax = plt.ylim()
+plt.xlabel('log(C)')
+plt.ylabel('Coefficients')
+plt.title('Logistic Regression Path')
+plt.axis('tight')
+plt.show()
+
+coefs_2=[]
 for lam in [.0001,.001,.01,.5,1,10,100]:
     logit_r = sk.LogisticRegression(penalty='l2', C = float(1)/lam).fit(X_train, train_targets)
+    coefs_2.append(logit_r.coef_.ravel().copy())
+    
     probabilities_r = logit_r.predict(X_test)
     predicted_lr_r = (probabilities_r > 0.5).astype(int)
     accuracy_lr_r = np.mean(predicted_lr_r == test_targets)
@@ -284,6 +300,15 @@ for lam in [.0001,.001,.01,.5,1,10,100]:
     print "Confusion Matrix:"
     print(confusion_matrix(test_targets, predicted_lr_r))
 
+coefs_2 = np.array(coefs_2)
+plt.plot(np.log10([.0001,.001,.01,.5,1,10,100]), coefs_2)
+ymin, ymax = plt.ylim()
+plt.xlabel('log(C)')
+plt.ylabel('Coefficients')
+plt.title('Logistic Regression Path')
+plt.axis('tight')
+plt.show()
+"""
 ### Part J: Multinomial Naive Bayes and Linear Suppor Vector Machines with One vs. One and One vs. The Rest Classifiers ###
 categories = ['comp.sys.ibm.pc.hardware','comp.sys.mac.hardware', 'misc.forsale', 'soc.religion.christian']
 
@@ -330,3 +355,4 @@ print "Accuracy of Linear SVM - One vs. The Rest: " + str(accuracy_svm)
 print(classification_report(twenty_test.target.tolist(), predicted_svm))
 print "Confusion Matrix:"
 print(confusion_matrix(twenty_test.target.tolist(), predicted_svm))
+"""
