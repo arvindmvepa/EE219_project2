@@ -131,7 +131,7 @@ for class_index in class_indices:
     number_of_terms_extracted = len(terms_extracted_in_class)
     maxFreq = max(freq_of_terms_in_class.values())
     tficf = dict()
-    
+
     for each_term in range(number_of_terms_extracted):
         term = terms_extracted_in_class[each_term]
         frequency_term = freq_of_terms_in_class.get(term)
@@ -141,7 +141,8 @@ for class_index in class_indices:
     print "Most significant 10 terms for class: " + str(all_newsgroups[class_index])
     most_significant_terms = dict(sorted(tficf.iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
     print (most_significant_terms.keys())
-"""
+
+
 ### Part D: Dimension Reduction ###
 svd = TruncatedSVD(n_components=50, random_state=42)
 X_train_reduced = svd.fit_transform(X_train_tfidf)
@@ -165,7 +166,7 @@ X_test = min_max_scaler.transform(X_test_reduced)
 
 train_targets = map(lambda x: int(x>=4), twenty_train.target.tolist())
 test_targets = map(lambda x: int(x>=4), twenty_test.target.tolist())
-"""
+
 # Train model and predict labels for test set
 linear_SVM = LinearSVC(dual=False, random_state=42).fit(X_train, train_targets)
 predicted_svm = linear_SVM.predict(X_test)
@@ -290,7 +291,7 @@ coefs_2=[]
 for lam in [.0001,.001,.01,.5,1,10,100]:
     logit_r = sk.LogisticRegression(penalty='l2', C = float(1)/lam).fit(X_train, train_targets)
     coefs_2.append(logit_r.coef_.ravel().copy())
-    
+
     probabilities_r = logit_r.predict(X_test)
     predicted_lr_r = (probabilities_r > 0.5).astype(int)
     accuracy_lr_r = np.mean(predicted_lr_r == test_targets)
@@ -322,8 +323,8 @@ twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=T
 X_test_counts = vectorizer.transform(twenty_test.data)
 X_test_tfidf = tfidf_transformer.transform(X_test_counts)
 X_test_reduced = svd.transform(X_test_tfidf)
-X_test = min_max_scaler.transform(X_test_reduced)    
-    
+X_test = min_max_scaler.transform(X_test_reduced)
+
 #Multinomial Naive Bayes
 clf = MultinomialNB().fit(X_train,  twenty_train.target.tolist())
 predicted_bayes = clf.predict(X_test)
@@ -339,7 +340,6 @@ linear_SVM = OneVsOneClassifier(LinearSVC(dual=False, random_state=42)).fit(X_tr
 predicted_svm = linear_SVM.predict(X_test)
 accuracy_svm = np.mean(predicted_svm == twenty_test.target.tolist())
 
-
 print "Accuracy of Linear SVM - One vs. One: " + str(accuracy_svm)
 print(classification_report(twenty_test.target.tolist(), predicted_svm))
 print "Confusion Matrix:"
@@ -349,7 +349,6 @@ print(confusion_matrix(twenty_test.target.tolist(), predicted_svm))
 linear_SVM = OneVsRestClassifier(LinearSVC(dual=False, random_state=42)).fit(X_train, twenty_train.target.tolist())
 predicted_svm = linear_SVM.predict(X_test)
 accuracy_svm = np.mean(predicted_svm == twenty_test.target.tolist())
-
 
 print "Accuracy of Linear SVM - One vs. The Rest: " + str(accuracy_svm)
 print(classification_report(twenty_test.target.tolist(), predicted_svm))
